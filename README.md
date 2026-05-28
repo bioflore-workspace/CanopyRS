@@ -37,7 +37,7 @@ See the [Installation guide](https://hugobaudchon.github.io/CanopyRS/getting-sta
 
 ### ▶️ Try it on Google Colab
 
-No local GPU? You can also run CanopyRS in our [Google Colab tutorial](https://colab.research.google.com/drive/1UIJiLVpyeg8_-GUKDrqPKuT3RL8QMPdo), which runs the full detect + segment pipeline (SelvaBox DINO detector + SAM2) on a sample orthomosaic on a free T4 GPU and visualizes the results, and whose cells you can reuse in your own notebook to run inference on your own data if desired. Note that setup takes ~20 minutes per session and Colab can't handle large orthomosaics, so it's best for quick tests or small datasets — for anything serious, install CanopyRS locally.
+No local GPU? You can also run CanopyRS in our [Google Colab tutorial](https://colab.research.google.com/drive/1UIJiLVpyeg8_-GUKDrqPKuT3RL8QMPdo), which runs the full detect + segment pipeline (SelvaBox DINO detector + SAM2) on a sample orthomosaic on a free T4 GPU and visualizes the results, and whose cells you can reuse in your own notebook to run inference on your own data if desired. Note that setup takes ~20 minutes per session and Colab can't handle large orthomosaics, so it's best for quick tests or small datasets.
 
 ## 📖 Documentation
 
