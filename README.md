@@ -15,6 +15,9 @@
   <a href="https://arxiv.org/abs/2507.00170">
     <img src="https://img.shields.io/badge/arXiv-2507.00170-red.svg" alt="Read the paper">
   </a>
+  <a href="https://colab.research.google.com/drive/1UIJiLVpyeg8_-GUKDrqPKuT3RL8QMPdo">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
+  </a>
 </p>
 
 Canopy RS (Remote Sensing) is a pipeline designed for processing high-resolution geospatial orthomosaics to detect, segment, and (in the future) classify trees of various forest biomes. It supports state-of-the-art model architectures spanning both CNNs (Faster R-CNN, Mask R-CNN, RetinaNet) and transformers (DINO, Mask2Former, SAM 2, SAM 3).
@@ -32,10 +35,15 @@ The pipeline includes components for tiling, detecting, aggregating, and segment
 
 See the [Installation guide](https://hugobaudchon.github.io/CanopyRS/getting-started/installation/) and [Quick Start](https://hugobaudchon.github.io/CanopyRS/getting-started/quickstart/) in the documentation.
 
+### ▶️ Try it on Google Colab
+
+No local GPU, or just want a quick no-code demo? Our [Google Colab tutorial](https://colab.research.google.com/drive/1UIJiLVpyeg8_-GUKDrqPKuT3RL8QMPdo) runs the full detect + segment pipeline on a sample orthomosaic on a free T4 GPU, then visualizes the results. Installation is adapted for Colab, and you can reuse its cells in your own notebook to run inference on your own data. Note that Colab is slower and can't handle large orthomosaics, so it's best for testing or small datasets — for production use, run CanopyRS locally.
+
 ## 📖 Documentation
 
 The full documentation covers:
 
+- [**Installation**](https://hugobaudchon.github.io/CanopyRS/getting-started/installation/) — requirements and step-by-step setup
 - [**Presets & Model Zoo**](https://hugobaudchon.github.io/CanopyRS/user-guide/presets/) — default configs and available pretrained models
 - [**Pipeline & Components**](https://hugobaudchon.github.io/CanopyRS/user-guide/pipeline/) — how to configure and run the pipeline
 - [**Data**](https://hugobaudchon.github.io/CanopyRS/user-guide/data/) — downloading and using datasets (SelvaBox, SelvaMask, Detectree2, etc.)
