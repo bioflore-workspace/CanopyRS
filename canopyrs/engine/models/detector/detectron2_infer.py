@@ -24,6 +24,11 @@ from torch import Tensor
 
 from canopyrs.engine.config_parsers import DetectorConfig
 from canopyrs.engine.models.detector.detector_base import DetectorWrapperBase
+from canopyrs.engine.models.detector.runtime_fallback import (
+    build_detrex_cuda_support_error,
+    is_detrex_gpu_support_error,
+    should_fallback_detrex_to_cpu,
+)
 from canopyrs.engine.models.registry import DETECTOR_REGISTRY
 
 warnings.filterwarnings(
@@ -132,7 +137,23 @@ class Detectron2DetectorWrapper(DetectorWrapperBase):
                 })
 
             # Run inference.
-            predictions = self.model(inputs)
+            try:
+                predictions = self.model(inputs)
+            except RuntimeError as error:
+                if not is_detrex_gpu_support_error(self.config.model, self.device.type, error):
+                    raise
+
+                if not should_fallback_detrex_to_cpu(self.config.model, self.device.type, error):
+                    raise RuntimeError(build_detrex_cuda_support_error()) from error
+
+                logging.getLogger(__name__).warning(
+                    "detrex CUDA ops are unavailable in this environment; retrying detector inference on CPU. "
+                    "Rebuild detrex with CUDA support to restore GPU inference performance."
+                )
+                self.device = torch.device("cpu")
+                self.model.to(self.device)
+                predictions = self.model(inputs)
+
             # Convert to torchvision Faster R-CNN style format.
             predictions = self.convert_detectron2_predictions(predictions)
 

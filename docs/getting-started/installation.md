@@ -48,8 +48,10 @@ git submodule update --init --recursive
 
 ```bash
 python -m pip install -e .
-python -m pip install --no-build-isolation -e ./detrex/detectron2 -e ./detrex
+FORCE_CUDA=1 TORCH_CUDA_ARCH_LIST=8.9 python -m pip install --no-build-isolation -e ./detrex/detectron2 -e ./detrex
 ```
+
+On NVIDIA L4 hosts, `8.9` is the correct compute capability. If you build on a different GPU family, replace `TORCH_CUDA_ARCH_LIST` accordingly. The CUDA toolkit must be installed on the host and `nvcc --version` must work before you run the install step above.
 
 ## SAM 3 — Hugging Face access request
 
@@ -79,3 +81,40 @@ This is a conflict between Detectron2 and SAM2 libraries, but it can be ignored 
 ```bash
 python -c "import canopyrs; print('CanopyRS installed successfully')"
 ```
+
+For detrex models, also verify that the CUDA extension executes on GPU:
+
+```bash
+python - <<'PY'
+import torch
+from detrex.layers import MultiScaleDeformableAttention
+
+device = torch.device("cuda")
+module = MultiScaleDeformableAttention(
+    embed_dim=32,
+    num_heads=4,
+    num_levels=1,
+    num_points=2,
+    batch_first=True,
+).to(device)
+
+query = torch.randn(1, 2, 32, device=device)
+value = torch.randn(1, 4, 32, device=device)
+reference_points = torch.full((1, 2, 1, 2), 0.5, device=device)
+spatial_shapes = torch.tensor([[2, 2]], dtype=torch.long, device=device)
+level_start_index = torch.tensor([0], dtype=torch.long, device=device)
+
+output = module(
+    query=query,
+    value=value,
+    reference_points=reference_points,
+    spatial_shapes=spatial_shapes,
+    level_start_index=level_start_index,
+)
+
+torch.cuda.synchronize()
+print(output.device)
+PY
+```
+
+If this fails with `Not compiled with GPU support`, `detrex` was built without CUDA ops and DINO or Mask2Former inference will not run on GPU until you rebuild it.
