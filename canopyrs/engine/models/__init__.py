@@ -1,34 +1,63 @@
 import importlib
-from pathlib import Path
-
-
-def auto_import_models():
-    """Automatically import all Python files in model subdirectories."""
-    current_dir = Path(__file__).parent
-
-    # Define the subdirectories to search
-    model_dirs = ['detector', 'segmenter', 'classifier', 'embedder']
-
-    for model_dir in model_dirs:
-        model_path = current_dir / model_dir
-        if model_path.exists() and model_path.is_dir():
-            # Import all .py files in the directory
-            for py_file in model_path.glob('*.py'):
-                if py_file.name != '__init__.py':
-                    module_name = py_file.stem
-                    try:
-                        importlib.import_module(f'canopyrs.engine.models.{model_dir}.{module_name}')
-                    except ImportError as e:
-                        print(f"Failed to import engine.models.{model_dir}.{module_name}: {e}")
-
-
-# Trigger auto-import when this module is imported
-auto_import_models()
-
-# Make registries available at package level
 from .registry import (
     DETECTOR_REGISTRY,
     SEGMENTER_REGISTRY,
     CLASSIFIER_REGISTRY,
-    EMBEDDER_REGISTRY
+    EMBEDDER_REGISTRY,
 )
+
+
+MODEL_MODULES = {
+    "detector": {
+        "deepforest": "deepforest_infer",
+        "dino_detrex": "detectron2_infer",
+        "faster_rcnn_detectron2": "detectron2_infer",
+        "retinanet_detectron2": "detectron2_infer",
+        "detectree2": "detectron2_infer",
+        "faster_rcnn": "pt_faster_rcnn",
+        "retina_net": "pt_retina_net",
+    },
+    "segmenter": {
+        "detectree2": "detectron2_infer",
+        "mask_rcnn_detectron2": "detectron2_infer",
+        "mask2former_detrex": "detectron2_infer",
+        "sam": "sam",
+        "sam2": "sam2",
+        "sam3": "sam3",
+    },
+    "classifier": {
+        "resnet": "resnet_classifier",
+        "swin": "swin_classifier",
+    },
+    "embedder": {},
+}
+
+
+def _get_registry(model_type: str):
+    return {
+        "detector": DETECTOR_REGISTRY,
+        "segmenter": SEGMENTER_REGISTRY,
+        "classifier": CLASSIFIER_REGISTRY,
+        "embedder": EMBEDDER_REGISTRY,
+    }[model_type]
+
+
+def ensure_model_registered(model_type: str, model_name: str) -> None:
+    registry = _get_registry(model_type)
+    if model_name in registry:
+        return
+
+    module_name = MODEL_MODULES.get(model_type, {}).get(model_name)
+    if module_name is None:
+        return
+
+    importlib.import_module(f"canopyrs.engine.models.{model_type}.{module_name}")
+
+# Make registries available at package level
+__all__ = [
+    "DETECTOR_REGISTRY",
+    "SEGMENTER_REGISTRY",
+    "CLASSIFIER_REGISTRY",
+    "EMBEDDER_REGISTRY",
+    "ensure_model_registered",
+]

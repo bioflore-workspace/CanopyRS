@@ -17,6 +17,7 @@ from canopyrs.engine.constants import Col, StateKey, INFER_AOI_NAME
 from canopyrs.engine.components.base import BaseComponent, ComponentResult, validate_requirements
 from canopyrs.engine.config_parsers import ClassifierConfig
 from canopyrs.engine.data_state import DataState
+from canopyrs.engine.models import ensure_model_registered
 from canopyrs.engine.models.registry import CLASSIFIER_REGISTRY
 from canopyrs.engine.models.utils import collate_fn_infer_image_masks
 
@@ -60,6 +61,7 @@ class ClassifierComponent(BaseComponent):
         super().__init__(config, parent_output_path, component_id)
 
         # Store model class (instantiate in __call__ to avoid loading during validation)
+        ensure_model_registered("classifier", config.model)
         if config.model not in CLASSIFIER_REGISTRY:
             raise ValueError(f'Invalid classifier model: {config.model}')
         self._model_class = CLASSIFIER_REGISTRY.get(config.model)

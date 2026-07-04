@@ -16,6 +16,7 @@ from canopyrs.engine.constants import Col, StateKey, INFER_AOI_NAME
 from canopyrs.engine.components.base import BaseComponent, ComponentResult, validate_requirements
 from canopyrs.engine.config_parsers import SegmenterConfig
 from canopyrs.engine.data_state import DataState
+from canopyrs.engine.models import ensure_model_registered
 from canopyrs.engine.models.registry import SEGMENTER_REGISTRY
 
 
@@ -63,6 +64,7 @@ class SegmenterComponent(BaseComponent):
         super().__init__(config, parent_output_path, component_id)
 
         # Get model class (without instantiating) to check requirements
+        ensure_model_registered("segmenter", config.model)
         if config.model not in SEGMENTER_REGISTRY:
             raise ValueError(f'Invalid segmenter model: {config.model}')
         self._model_class = SEGMENTER_REGISTRY.get(config.model)
