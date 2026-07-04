@@ -23,6 +23,7 @@ class DetectorWrapperBase(ABC):
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.preload_images_to_device = True
+        self._logged_oom_retry = False
 
         self.model = None
 
@@ -42,10 +43,41 @@ class DetectorWrapperBase(ABC):
             for images in data_loader_with_progress:
                 if self.preload_images_to_device:
                     images = [img.to(self.device, non_blocking=True) for img in images]
-                outputs = self.forward(images)
+                outputs = self._forward_with_oom_retry(images)
                 predictions.extend(outputs)
 
         return predictions
+
+    def _forward_with_oom_retry(self, images):
+        try:
+            return self.forward(images)
+        except RuntimeError as exc:
+            if not self._is_cuda_oom(exc):
+                raise
+            return self._retry_split_batch(images, exc)
+
+    def _retry_split_batch(self, images, exc):
+        if self.device.type != 'cuda' or len(images) <= 1:
+            raise exc
+
+        if not self._logged_oom_retry:
+            print(
+                f"CUDA OOM with detector micro-batch size {len(images)}. "
+                "Retrying with smaller detector micro-batches."
+            )
+            self._logged_oom_retry = True
+
+        torch.cuda.empty_cache()
+
+        midpoint = max(1, len(images) // 2)
+        outputs = []
+        outputs.extend(self._forward_with_oom_retry(images[:midpoint]))
+        outputs.extend(self._forward_with_oom_retry(images[midpoint:]))
+        return outputs
+
+    @staticmethod
+    def _is_cuda_oom(exc: RuntimeError) -> bool:
+        return "out of memory" in str(exc).lower()
 
     def infer(self, infer_ds: UnlabeledRasterDataset, collate_fn: callable):
         num_workers = max(0, getattr(self.config, 'dataloader_num_workers', 3))

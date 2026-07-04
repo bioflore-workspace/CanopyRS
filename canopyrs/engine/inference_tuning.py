@@ -5,7 +5,8 @@ import torch
 
 DEFAULT_GPU_TARGET_UTILIZATION = 0.9
 DEFAULT_GPU_MEMORY_RESERVE_GIB = 2.0
-DEFAULT_MAX_DETECTOR_BATCH_SIZE = 8
+DEFAULT_MAX_DETECTOR_BATCH_SIZE = 12
+DEFAULT_MAX_SEGMENTER_IMAGE_BATCH_SIZE = 4
 DEFAULT_MAX_SEGMENTER_BOX_BATCH_SIZE = 512
 
 
@@ -81,6 +82,29 @@ def _scale_detector(component_config, usable_gib: float) -> list[str]:
 def _scale_segmenter(component_config, usable_gib: float) -> list[str]:
     updates = []
 
+    current_image_batch_size = getattr(component_config, "image_batch_size", None)
+    if current_image_batch_size:
+        explicit_image_batch_size = _env_int("CANOPYRS_SEGMENTER_IMAGE_BATCH_SIZE")
+        if explicit_image_batch_size is not None:
+            new_image_batch_size = explicit_image_batch_size
+        else:
+            max_image_batch_size = _env_int(
+                "CANOPYRS_MAX_SEGMENTER_IMAGE_BATCH_SIZE",
+                DEFAULT_MAX_SEGMENTER_IMAGE_BATCH_SIZE,
+            )
+            new_image_batch_size = _scaled_value(
+                current_value=current_image_batch_size,
+                usable_gib=usable_gib,
+                reference_gib=_segmenter_image_reference_vram_gib(component_config),
+                max_value=max_image_batch_size,
+            )
+
+        if new_image_batch_size != current_image_batch_size:
+            component_config.image_batch_size = new_image_batch_size
+            updates.append(
+                f"segmenter image_batch_size {current_image_batch_size}->{new_image_batch_size}"
+            )
+
     current_box_batch_size = getattr(component_config, "box_batch_size", None)
     if current_box_batch_size:
         explicit_box_batch_size = _env_int("CANOPYRS_SEGMENTER_BOX_BATCH_SIZE")
@@ -125,9 +149,9 @@ def _detector_reference_vram_gib(component_config) -> float:
     architecture = str(getattr(component_config, "architecture", "")).lower()
 
     if model == "dino_detrex" and "swin" in architecture:
-        return 10.0
+        return 4.0
     if model == "dino_detrex":
-        return 8.0
+        return 3.5
     if model in {"detectree2", "faster_rcnn_detectron2", "retinanet_detectron2"}:
         return 4.0
     if model == "deepforest":
@@ -144,6 +168,21 @@ def _segmenter_reference_vram_gib(component_config) -> float:
     if model in {"sam2", "sam3"}:
         return 8.0
     return 6.0
+
+
+def _segmenter_image_reference_vram_gib(component_config) -> float:
+    model = str(getattr(component_config, "model", "")).lower()
+    architecture = str(getattr(component_config, "architecture", "")).lower()
+
+    if model == "sam2" and architecture == "l":
+        return 10.0
+    if model == "sam2":
+        return 8.0
+    if model == "sam3" and architecture == "l":
+        return 12.0
+    if model == "sam3":
+        return 10.0
+    return _segmenter_reference_vram_gib(component_config)
 
 
 def _env_flag(name: str) -> bool:
