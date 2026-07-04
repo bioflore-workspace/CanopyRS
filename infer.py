@@ -1,15 +1,7 @@
 import argparse
 import logging
-import os
 import warnings
 from warnings import warn
-
-os.environ.setdefault("OMP_NUM_THREADS", "1")
-os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
-os.environ.setdefault("MKL_NUM_THREADS", "1")
-os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
-os.environ.setdefault("BLIS_NUM_THREADS", "1")
 
 from canopyrs.engine.utils import init_spawn_method
 
