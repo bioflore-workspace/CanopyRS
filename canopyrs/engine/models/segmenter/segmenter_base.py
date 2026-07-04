@@ -167,9 +167,12 @@ class SegmenterWrapperBase(ABC):
         return n_masks_processed
 
     def _infer_on_dataset(self, dataset: BaseDataset, collate_fn: object):
+        num_workers = max(0, getattr(self.config, 'dataloader_num_workers', 3))
         infer_dl = DataLoader(dataset, batch_size=self.config.image_batch_size, shuffle=False,
                               collate_fn=collate_fn,
-                              num_workers=3, persistent_workers=True)
+                              num_workers=num_workers,
+                              persistent_workers=num_workers > 0,
+                              pin_memory=self.device.type == 'cuda')
 
         tiles_paths = []
         tiles_boxes_object_ids = []

@@ -11,6 +11,7 @@ from canopyrs.engine.models.registry import DETECTOR_REGISTRY
 class DeepForestWrapper(DetectorWrapperBase):
     def __init__(self, config: DetectorConfig):
         super().__init__(config)
+        self.preload_images_to_device = False
 
         from deepforest import main
 

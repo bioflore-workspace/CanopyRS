@@ -38,6 +38,7 @@ detrex_logger.disabled = True
 class Detectron2DetectorWrapper(DetectorWrapperBase):
     def __init__(self, config: DetectorConfig):
         super().__init__(config)
+        self.preload_images_to_device = False
 
         if self.config.model.endswith('detectron2'):
             from canopyrs.engine.models.detector.train_detectron2.augmentation import AugmentationAdder

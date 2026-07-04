@@ -3,6 +3,7 @@ import logging
 import warnings
 from warnings import warn
 
+from canopyrs.engine.inference_tuning import auto_scale_pipeline_inference
 from canopyrs.engine.utils import init_spawn_method
 
 warnings.filterwarnings(
@@ -30,6 +31,7 @@ from canopyrs.engine.pipeline import Pipeline
 def pipeline_main(args):
     config_path = get_config_path(f'{args.config}')
     config = PipelineConfig.from_yaml(config_path)
+    auto_scale_pipeline_inference(config)
 
     if args.io_config_path and (args.imagery_path or args.output_path):
         raise ValueError("Either provide an io config file or pass imagery/tiles path and output path as arguments.")

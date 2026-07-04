@@ -22,6 +22,7 @@ class DetectorWrapperBase(ABC):
         self.config = config
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.preload_images_to_device = True
 
         self.model = None
 
@@ -39,16 +40,20 @@ class DetectorWrapperBase(ABC):
                                              desc="Inferring detector...",
                                              leave=True)
             for images in data_loader_with_progress:
-                images = list(img.to(self.device) for img in images)
+                if self.preload_images_to_device:
+                    images = [img.to(self.device, non_blocking=True) for img in images]
                 outputs = self.forward(images)
                 predictions.extend(outputs)
 
         return predictions
 
     def infer(self, infer_ds: UnlabeledRasterDataset, collate_fn: callable):
+        num_workers = max(0, getattr(self.config, 'dataloader_num_workers', 3))
         infer_dl = DataLoader(infer_ds, batch_size=self.config.batch_size, shuffle=False,
                               collate_fn=collate_fn,
-                              num_workers=3, persistent_workers=True)
+                              num_workers=num_workers,
+                              persistent_workers=num_workers > 0,
+                              pin_memory=self.device.type == 'cuda')
 
         results = self._infer(infer_dl)
         boxes, boxes_scores, classes = detector_result_to_lists(results)
