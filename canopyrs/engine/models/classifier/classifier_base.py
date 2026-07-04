@@ -12,8 +12,6 @@ from pathlib import Path
 from canopyrs.engine.config_parsers import ClassifierConfig
 from huggingface_hub import hf_hub_download
 
-from torchmetrics import F1Score
-
 
 class ClassifierWrapperBase(ABC):
     """Base class for all classifier model wrappers"""
@@ -185,6 +183,8 @@ class TorchTrainerClassifierWrapperBase(ClassifierWrapperBase):
         # TODO: include all metrics with torchmetrics
         # F1, accuracy, recall, precision
         self.model.eval()
+        from torchmetrics import F1Score
+
         f1_metric = F1Score(task="multiclass",
                             num_classes=self.num_classes,
                             average='micro',

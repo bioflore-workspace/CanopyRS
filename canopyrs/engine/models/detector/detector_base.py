@@ -4,7 +4,6 @@ from collections import OrderedDict
 from pathlib import Path
 
 import torch
-import torchmetrics
 from geodataset.dataset import UnlabeledRasterDataset
 from huggingface_hub import hf_hub_download
 from shapely import box
@@ -60,6 +59,8 @@ class DetectorWrapperBase(ABC):
 class TorchVisionDetectorWrapperBase(DetectorWrapperBase, ABC):
     def __init__(self, config, ):
         super().__init__(config)
+
+        import torchmetrics
 
         self.map_metric = torchmetrics.detection.MeanAveragePrecision(
             # backend='faster_coco_eval',   # Requires additional dependencies

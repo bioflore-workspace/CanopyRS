@@ -24,10 +24,6 @@ from torch import Tensor
 
 from canopyrs.engine.config_parsers import DetectorConfig
 from canopyrs.engine.models.detector.detector_base import DetectorWrapperBase
-from canopyrs.engine.models.detector.train_detectron2.augmentation import AugmentationAdder
-from canopyrs.engine.models.detector.train_detectron2.train_detectron2 import get_base_detectron2_model_cfg
-from canopyrs.engine.models.detector.train_detectron2.train_detrex import get_base_detrex_model_cfg
-from canopyrs.engine.models.segmenter.detectree2 import setup_detectree2_cfg
 from canopyrs.engine.models.registry import DETECTOR_REGISTRY
 
 warnings.filterwarnings(
@@ -44,6 +40,9 @@ class Detectron2DetectorWrapper(DetectorWrapperBase):
         super().__init__(config)
 
         if self.config.model.endswith('detectron2'):
+            from canopyrs.engine.models.detector.train_detectron2.augmentation import AugmentationAdder
+            from canopyrs.engine.models.detector.train_detectron2.train_detectron2 import get_base_detectron2_model_cfg
+
             cfg = get_base_detectron2_model_cfg(self.config)
             self.model = build_model(cfg)
             self.model.eval()
@@ -52,6 +51,8 @@ class Detectron2DetectorWrapper(DetectorWrapperBase):
             self.aug = AugmentationList(AugmentationAdder().get_augmentation_detectron2_test(cfg))
             self.input_format = cfg.INPUT.FORMAT
         elif self.config.model == 'detectree2':
+            from canopyrs.engine.models.segmenter.detectree2 import setup_detectree2_cfg
+
             cfg = setup_detectree2_cfg(
                 base_model=self.config.architecture,
                 update_model=self.config.checkpoint_path,
@@ -64,6 +65,8 @@ class Detectron2DetectorWrapper(DetectorWrapperBase):
             self.aug = ResizeShortestEdge([cfg.INPUT.MIN_SIZE_TEST, cfg.INPUT.MIN_SIZE_TEST], cfg.INPUT.MAX_SIZE_TEST)
             self.input_format = cfg.INPUT.FORMAT
         elif self.config.model.endswith('detrex'):
+            from canopyrs.engine.models.detector.train_detectron2.train_detrex import get_base_detrex_model_cfg
+
             cfg = get_base_detrex_model_cfg(self.config)
             self.model = instantiate(cfg.model)
             self.model.eval()
