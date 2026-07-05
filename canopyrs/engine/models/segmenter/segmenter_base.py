@@ -208,17 +208,22 @@ class SegmenterWrapperBase(ABC):
                                      leave=True)                            # TODO check why its so slow here, like 30 seconds
 
         for i, sample in enumerate(dataset_with_progress):
-            tiles_idx = list(range(i * self.config.image_batch_size, (i + 1) * self.config.image_batch_size))[:len(sample)]
             if isinstance(dataset, DetectionLabeledRasterCocoDataset):
                 images, boxes, boxes_object_ids = sample
-                tiles_paths.extend([dataset.tiles[tile_idx]['path'] for tile_idx in tiles_idx])     # TODO tiles idx should be returned by the dataset __getitem__ method
             elif isinstance(dataset, UnlabeledRasterDataset):
                 images = list(sample)
                 boxes = [None] * len(images)
                 boxes_object_ids = [None] * len(images)
-                tiles_paths.extend([dataset.tile_paths[tile_idx] for tile_idx in tiles_idx])        # TODO tiles idx should be returned by the dataset __getitem__ method
             else:
                 raise ValueError("Dataset type not supported.")
+
+            batch_start_idx = i * self.config.image_batch_size
+            tiles_idx = list(range(batch_start_idx, batch_start_idx + len(images)))
+
+            if isinstance(dataset, DetectionLabeledRasterCocoDataset):
+                tiles_paths.extend([dataset.tiles[tile_idx]['path'] for tile_idx in tiles_idx])     # TODO tiles idx should be returned by the dataset __getitem__ method
+            else:
+                tiles_paths.extend([dataset.tile_paths[tile_idx] for tile_idx in tiles_idx])        # TODO tiles idx should be returned by the dataset __getitem__ method
 
             self.forward(
                 images=images,
